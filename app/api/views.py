@@ -1,11 +1,9 @@
-from django.db import transaction
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
 from .models import Student
 from .serializer import StudentListSerializer, StudentSerializer
-from FaceRecognition import FR
 
 # FR = FaceRecognition()
 # Create your views here.
@@ -20,17 +18,8 @@ def enroll(request):
     student = StudentSerializer(data=request.data)
     if not student.is_valid(): 
         return Response(student.errors, status=status.HTTP_400_BAD_REQUEST)
-    try:
-        with transaction.atomic():
-            student = student.save()
-            print(student.data)
-            if not FR.encode_new_face(f".{student.data['face_img']}"):
-                raise Exception("Face encoding failed.")  # Trigger rollback
-            return Response(student.data, status=status.HTTP_201_CREATED)
-    except Exception as e:
-        # Log the error if necessary
-        print(f"Error during enrollment: {str(e)}")
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    student = student.save()
+    return Response(student.data, status=status.HTTP_201_CREATED)
 
 def find_user(pk):
     try:
